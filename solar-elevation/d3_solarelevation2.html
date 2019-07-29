@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>SolarElevation</title>
+  <meta charset="utf-8">
+  <style>
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: black;
+				shape-rendering: crispEdges;
+			}
+			
+			.axis text {
+				font-family: sans-serif;
+				font-size: 11px;
+			}
+      
+      .error {
+        color: red;
+      }
+  </style>
+  <script type="text/javascript" src="d3.js"></script>
+  <script type="text/javascript" src="solarelevation.js"></script>
+  </script>
+</head>
+<body>
+  <h1>Solar Elevation Plot (using D3)</h1>
+  <div id="plotDiv"></div>
+  <form>
+    <p>
+      <select id="planetType">
+        <option value="selectplanet" selected="selected">-- Select Planet --</option>
+        <option value="standardmercury">Mercury</option>
+        <option value="standardvenus">Venus</option>
+        <option value="standardearth">Earth</option>
+        <option value="standardmars">Mars</option>
+      </select>
+    </p>
+    <p>
+      <label for="hoursPerDay">Hours per day:</label>
+      <input id="hoursPerDay" type="number" min="1"></input>
+      <label for="hoursPerYear">Hours per year:</label>
+      <input id="hoursPerYear" type="number" min="1"></input>
+    </p>
+    <p>
+      <label for="planetTilt">Planet axis tilt in degrees:</label>
+      <input id="planetTilt" type="number" min="0" max="180"></input>
+    </p>
+    <p>
+      <label for="observerLat">Observer latitude in degrees:</label>
+      <input id="observerLat" type="number" min="-90" max="90"></input>
+    </p>
+    <p>
+      <label for="startTime">Start time in hours:</label>
+      <input id="startTime" type="number" min="0"></input>
+      <label for="runDuration">Run duration in hours:</label>
+      <input id="runDuration" type="number" min="1"></input>
+    </p>
+   <p>
+      <input type="button" id="plotButton" value="Plot">
+    </p>
+  </form>
+  <script type="text/javascript">
+  
+window.onload = function() {
+  document.getElementById("planetType").onchange = loadPlanetData;
+  document.getElementById("plotButton").onclick = plotHandler;
+};
+
+function loadPlanetData() {
+  var value = this.options[this.selectedIndex].value;
+  if (value == "standardearth") {
+    document.getElementById("hoursPerDay").value = 24;
+    document.getElementById("hoursPerYear").value = 24*365.25;
+    document.getElementById("planetTilt").value = 23.5;
+    document.getElementById("observerLat").value = 0;
+    document.getElementById("startTime").value = 0;
+    document.getElementById("runDuration").value = 24*365.25;
+  }
+  else if (value == "standardvenus") {
+    document.getElementById("hoursPerDay").value = 24.0*243.0;
+    document.getElementById("hoursPerYear").value = 24.0*225.0;
+    document.getElementById("planetTilt").value = 177.36;
+    document.getElementById("observerLat").value = 0;
+    document.getElementById("startTime").value = 0;
+    document.getElementById("runDuration").value = 24.0*225.0;
+  }
+  else if (value == "standardmars") {
+    document.getElementById("hoursPerDay").value = 24.667;
+    document.getElementById("hoursPerYear").value = 24.0*687.0;
+    document.getElementById("planetTilt").value = 25;
+    document.getElementById("observerLat").value = 0;
+    document.getElementById("startTime").value = 0;
+    document.getElementById("runDuration").value = 24.0*687.0;
+  }
+  else if (value == "standardmercury") {
+    document.getElementById("hoursPerDay").value = 24.0*58.0 + 15.5;
+    document.getElementById("hoursPerYear").value = 24.0*88.0;
+    document.getElementById("planetTilt").value = 2.11;
+    document.getElementById("observerLat").value = 0;
+    document.getElementById("startTime").value = 0;
+    document.getElementById("runDuration").value = 24.0*88.0;
+  }
+}
+
+function plotHandler() {
+  
+  var observerLatitude = parseFloat(document.getElementById("observerLat").value);
+	var hoursPerDay = parseFloat(document.getElementById("hoursPerDay").value);
+	var hoursPerYear= parseFloat(document.getElementById("hoursPerYear").value);  
+	var planetTiltInDegrees = parseFloat(document.getElementById("planetTilt").value);
+  var startTime = parseFloat(document.getElementById("startTime").value);
+  var endTime = startTime + parseFloat(document.getElementById("runDuration").value);
+    
+  document.getElementById("plotDiv").innerHTML = "";
+  
+  if (isNaN(hoursPerDay)) {
+    showError("Hours per day is not specified!")
+  }
+  else if (isNaN(hoursPerYear)) {
+    showError("Hours per year is not specified!")
+  }
+  else if (isNaN(planetTiltInDegrees)) {
+    showError("Planet tilt is not specified!")
+  }
+  else if (isNaN(observerLatitude)) {
+    showError("Observer latitude is not specified!")
+  }
+  else if (isNaN(startTime)) {
+    showError("Start time is not specified!")
+  }
+  else if (isNaN(endTime)) {
+    showError("Run duration is not specified!")
+  }
+  else {
+  
+	var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
+  
+  
+  //Width and height
+	var w = 500;
+	var h = 300;
+  var padding = 30;
+
+  //Create SVG element
+	var svg = d3.select("#plotDiv")
+		.append("svg")
+		.attr("width", w)
+		.attr("height", h);
+    
+  var dataset = [];
+  for (var time = startTime; time <= endTime; time += 1.0) {
+    var elevation = solar.calculate(time);
+    dataset.push(elevation);
+  }
+    
+  var xScale = d3.scale.linear()
+    .domain([startTime, endTime])
+    .range([padding, w - padding * 2]);
+  
+  var yScale = d3.scale.linear()
+    .domain([-90, 90])
+    .range([h - padding, padding]);
+    
+  svg.selectAll("circle")
+    .data(dataset)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d, i) {
+      return xScale(startTime + i);
+    })
+    .attr("cy", function(d) {
+      return yScale(d);
+    })
+    .attr("r", 2)
+    .style("fill", function(d) {
+      if (d < 0) {
+        return "blue";
+      }
+      else {
+        return "orange";
+      }
+    });
+    
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .orient("bottom")
+    .ticks(5);
+   
+  svg.append("g")
+		.attr("class", "axis")
+		.attr("transform", "translate(0," + (h - padding) + ")")
+    .call(xAxis);
+    
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .orient("left")
+    .tickValues([-90, -60, -30, 0, 30, 60, 90]);
+    
+  svg.append("g")
+		.attr("class", "axis")
+		.attr("transform", "translate(" + padding + ",0)")
+    .call(yAxis);
+    
+  }
+    
+}
+
+function showError(msg) {
+  document.getElementById("plotDiv").innerHTML = "<p class='error'>" + msg + "</p>";
+}
+
+  </script>
+</body>
+</html>
