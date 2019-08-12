@@ -73,6 +73,7 @@ window.onload = function() {
 
 function plotHandler() {
 
+  var polarPlot = true;
   var observerLatitude = getSelection("observerLat");
   observerLatitude = parseFloat(observerLatitude);
   
@@ -113,64 +114,102 @@ function plotHandler() {
   
   document.getElementById("plotDiv").innerHTML = "";
   
-  //Width and height
-	var w = 500;
-	var h = 300;
-  var padding = 30;
-
-  //Create SVG element
-	var svg = d3.select("#plotDiv")
-		.append("svg")
-		.attr("width", w)
-		.attr("height", h);
-    
+  var svg, xScale, yScale;
   var startTime = 0.0;
   var endTime = solar.yearLength;
-    
-  var xScale = d3.scale.linear()
-    .domain([startTime, endTime])
-    .range([padding, w - padding * 2]);
-  
-  var yScale = d3.scale.linear()
-    .domain([-90, 90])
-    .range([h - padding, padding]);
-    
-  var xAxis = d3.svg.axis()
-    .scale(xScale)
-    .orient("bottom")
-    .ticks(5)
-    .tickFormat(function(d) {
-      return "day " + Math.floor(d/hoursPerDay);
-    });
-    
-  svg.append("g")
-		.attr("class", "axis")
-		.attr("transform", "translate(0," + (h - padding) + ")")
-    .call(xAxis);
-    
-  var yAxis = d3.svg.axis()
-    .scale(yScale)
-    .orient("left")
-    .tickValues([-90, -60, -30, 0, 30, 60, 90]);
-    
-  svg.append("g")
-		.attr("class", "axis")
-		.attr("transform", "translate(" + padding + ",0)")
-    .call(yAxis);
 
-  svg.selectAll("circle").remove();
+  if (polarPlot) {
+    var w = 500;
+    var h = w;
+    var padding = 30;
+
+    svg = d3.select("#plotDiv")
+      .append("svg")
+      .attr("width", w)
+      .attr("height", h);
+
+    xScale = d3.scale.linear()
+      .domain([-1.0, 1.0])
+      .range([padding, w - padding]);
+    
+    yScale = d3.scale.linear()
+      .domain([-1.0, 1.0])
+      .range([h - padding, padding]);
+
+    svg.append("circle")
+      .attr("cx", xScale(0.0))
+      .attr("cy", yScale(0.0))
+      .attr("r", (w - padding * 2)*0.5)
+      .style("fill", "#f9f9f9");
+
+  }
+  else {
+    //Width and height
+    var w = 500;
+    var h = 300;
+    var padding = 30;
+
+    //Create SVG element
+    svg = d3.select("#plotDiv")
+      .append("svg")
+      .attr("width", w)
+      .attr("height", h);
+
+    xScale = d3.scale.linear()
+      .domain([startTime, endTime])
+      .range([padding, w - padding * 2]);
+    
+    yScale = d3.scale.linear()
+      .domain([-90, 90])
+      .range([h - padding, padding]);
+      
+    var xAxis = d3.svg.axis()
+      .scale(xScale)
+      .orient("bottom")
+      .ticks(5)
+      .tickFormat(function(d) {
+        return "day " + Math.floor(d/hoursPerDay);
+      });
+      
+    svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + (h - padding) + ")")
+      .call(xAxis);
+      
+    var yAxis = d3.svg.axis()
+      .scale(yScale)
+      .orient("left")
+      .tickValues([-90, -60, -30, 0, 30, 60, 90]);
+      
+    svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(" + padding + ",0)")
+      .call(yAxis);
+  }
+
+  svg.selectAll(".sun").remove();
 
   var time = 0.0;
   var timer = d3.timer( function(t) {
 
     time += hoursPerTick;
     var elevation = solar.calculate(time);
+    var azimuth = solar.calculateAz(time);
+    var cx, cy;
+    if (polarPlot) {
+      cx = xScale(computeX(elevation, azimuth));
+      cy = yScale(computeY(elevation, azimuth));
+    }
+    else {
+      cx = xScale(time);
+      cy = yScale(elevation);
+    }
     var color = "orange";
     if (elevation < 0) {
         color = "blue";
     }
 
-    svg.selectAll("circle")
+    svg.selectAll(".sun")
         .each ( function() { this.bogus_opacity *= .9 } )
         .attr( "opacity",
             function() { return this.bogus_opacity } )
@@ -179,8 +218,9 @@ function plotHandler() {
 
     svg.append("circle")
         .each( function() { this.bogus_opacity = 1.0 } )
-        .attr("cx", xScale(time))
-        .attr("cy", yScale(elevation))
+        .attr("class", "sun")
+        .attr("cx", cx)
+        .attr("cy", cy)
         .attr("r", 2)
         .style("fill", color);   
         
@@ -188,6 +228,14 @@ function plotHandler() {
 
   });
 
+}
+
+function computeX(elevation, azimuth) {
+  return Math.cos(degreesToRadians(azimuth))*Math.sin(degreesToRadians(90.0 - elevation));
+}
+
+function computeY(elevation, azimuth) {
+  return Math.sin(degreesToRadians(azimuth))*Math.sin(degreesToRadians(90.0 - elevation)); 
 }
 
 function getSelection(id) {
