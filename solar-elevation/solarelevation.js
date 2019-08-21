@@ -31,9 +31,12 @@ function SolarElevation(dayLength, yearLength, planetTilt, observerLatitude) {
 		return elevation;
 	};
 	this.calculateAz = function(time) {
-		var x = time/this.dayLength;
-		var azimuth = (x - Math.floor(x)) * 360.0; 
-		return azimuth;
+		var alphaAngle = this.alpha * time;
+		var betaAngle = this.beta * time;
+		return radiansToDegrees(alphaAngle - betaAngle);
+//		var x = time/this.dayLength;
+//		var azimuth = (x - Math.floor(x)) * 360.0; 
+//		return azimuth;
 	};
 }
 

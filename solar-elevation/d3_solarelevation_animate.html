@@ -21,7 +21,7 @@
   </script>
 </head>
 <body>
-  <h1>Animated Solar Elevation Plot (using D3)</h1>
+  <h1>Animated Solar Azimuth/Elevation Plot (using D3)</h1>
   <div id="plotDiv"></div>
   <form>
     <p>
@@ -31,6 +31,7 @@
         <option value="uprightearth">Upright Earth</option>
         <option value="tiltedearth">Tilted Earth</option>
         <option value="toppledearth">Toppled Earth</option>
+        <option value="tidallockearth">Tidal-locked Earth</option>
         <!--<option value="standardvenus">Standard Venus</option>-->
       </select>
     </p>
@@ -60,7 +61,18 @@
         <option value="0.1">0.1 hour</option>
       </select>
     </p>
-   <p>
+    <p>
+      <label for="fadeFactor">Select fade factor:</label>
+      <select id="fadeFactor">
+        <option value="1.0">None</option>
+        <option value="0.99">0.99</option>
+        <option value="0.9" selected="selected">0.9</option>
+        <option value="0.75">0.75</option>
+        <option value="0.5">0.5</option>
+        <option value="0.1">0.1</option>
+      </select>
+    </p>
+    <p>
       <input type="button" id="plotButton" value="Plot">
     </p>
   </form>
@@ -88,7 +100,7 @@ function plotHandler() {
   }
   else if (planetType == "uprightearth") {
 		hoursPerDay = 24.0;
-		hoursPerYear = hoursPerDay*365.25;
+    hoursPerYear = hoursPerDay*365.25;
 		planetTiltInDegrees = 0.0;
   }
   else if (planetType == "tiltedearth") {
@@ -101,6 +113,11 @@ function plotHandler() {
 		hoursPerYear = hoursPerDay*365.25;
 		planetTiltInDegrees = 90.0;
   }
+  else if (planetType == "tidallockearth") {
+		hoursPerDay = 365.25;
+		hoursPerYear = hoursPerDay;
+		planetTiltInDegrees = 23.5;
+  }
   else if (planetType == "standardvenus") {
 		hoursPerDay = 24.0*243.0;
 		hoursPerYear = 24.0*225.0;
@@ -109,6 +126,9 @@ function plotHandler() {
 
   var hoursPerTick = getSelection("hoursPerTick");
   hoursPerTick = parseFloat(hoursPerTick);
+
+  var fadeFactor = getSelection("fadeFactor");
+  fadeFactor = parseFloat(fadeFactor);
 
 	var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
   
@@ -140,7 +160,19 @@ function plotHandler() {
       .attr("cx", xScale(0.0))
       .attr("cy", yScale(0.0))
       .attr("r", (w - padding * 2)*0.5)
-      .style("fill", "#f9f9f9");
+      .style("stroke", "black")
+      .style("fill-opacity", 0);
+
+    svg.append("circle")
+      .attr("cx", xScale(computeX(observerLatitude, 180.0)))
+      .attr("cy", yScale(computeY(observerLatitude, 180.0)))
+      .attr("r", 2)
+      .style("fill", "black");
+
+    clock = svg.append("text")
+      .text("hour: 0")
+      .attr("x", padding)
+      .attr("y", h - padding);
 
   }
   else {
@@ -204,13 +236,13 @@ function plotHandler() {
       cx = xScale(time);
       cy = yScale(elevation);
     }
-    var color = "orange";
+    var color = "red"; //"orange";
     if (elevation < 0) {
         color = "blue";
     }
 
     svg.selectAll(".sun")
-        .each ( function() { this.bogus_opacity *= .9 } )
+        .each ( function() { this.bogus_opacity *= fadeFactor } )
         .attr( "opacity",
             function() { return this.bogus_opacity } )
         .filter( function() { return this.bogus_opacity<0.05 } )
@@ -223,6 +255,8 @@ function plotHandler() {
         .attr("cy", cy)
         .attr("r", 2)
         .style("fill", color);   
+
+    clock.text("hour: " + Math.floor(time));
         
     if (time > endTime) { timer.stop(); }
 
