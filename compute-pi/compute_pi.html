@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Compute PI</title>
+  <meta charset="utf-8">
+  <style>
+    p span {
+        overflow-wrap: anywhere;
+    }   
+  </style>
+  <script type="text/javascript" src="decimal.js"></script>
+</head>
+<body>
+    <h1>Compute PI</h1>
+    <form>
+        <label for="precision">Precision:</label>
+        <input id="precision" type="number" value="20" min="20"></input>
+        <label for="iterations">Number of iterations:</label>
+        <input id="iterations" type="number" value="0" min="0"></input>
+        <input type="button" id="computeButton" value="Compute">
+    </form>
+    <p>X = <span id="x-number"></span></p>
+    <p>PI = <span id="pi-number"></span></p>
+    <p>Y = <span id="y-number"></span></p>
+    <script type="text/javascript">
+        window.onload = function() {
+            var button = document.getElementById("computeButton");
+            button.onclick = computeHandler
+        };
+
+        function computeHandler() {
+            document.getElementById("x-number").innerHTML = "working...";
+            document.getElementById("pi-number").innerHTML = "working...";
+            document.getElementById("y-number").innerHTML = "working...";
+            precision = parseInt(document.getElementById("precision").value);
+            iteration = parseInt(document.getElementById("iterations").value);
+            MyDecimal = Decimal.clone({ precision: precision })
+            var x = new MyDecimal(2).sqrt()
+            var pi = new MyDecimal(2).plus(x)
+            //onequarter = new MyDecimal(1).dividedBy(new Decimal(4))
+            //y = new MyDecimal(2).pow(onequarter)
+            var y = new MyDecimal("1.1892071150027210667")
+            for (i=0; i < iteration; i++) {
+                var sqrtx = x.sqrt()
+                var invsqrtx = new MyDecimal(1).dividedBy(sqrtx)
+                x = sqrtx.plus(invsqrtx).dividedBy(2)
+                var xplus1 = x.plus(1)
+                var yplus1 = y.plus(1)
+                pi = xplus1.dividedBy(yplus1).times(pi)
+                sqrtx = x.sqrt()
+                invsqrtx = new MyDecimal(1).dividedBy(sqrtx)
+                y = y.times(sqrtx).plus(invsqrtx).dividedBy(yplus1)
+            }
+            document.getElementById("x-number").innerHTML = x.toFixed();
+            document.getElementById("pi-number").innerHTML = pi.toFixed();
+            document.getElementById("y-number").innerHTML = y.toFixed();
+       }
+    </script>
+</body>
+</html>
