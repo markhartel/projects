@@ -29,6 +29,7 @@
         </tr>
         </table>
     </form>
+    <p>i = <span id="i-number"></span></p>
     <p>Pi<sub></sub> = <span id="pi-number"></span><br><span id="miss-index"></span></p>
     <p>A<sub></sub> = <span id="x-number"></span></p>
     <p>B<sub></sub> = <span id="y-number"></span></p>
@@ -72,6 +73,7 @@
             if (miss) {
                 buff += '</s></span>';
             }
+            document.getElementById("i-number").innerHTML = index;
             document.getElementById("x-number").innerHTML = x.toFixed();
             document.getElementById("pi-number").innerHTML = buff;
             document.getElementById("y-number").innerHTML = y.toFixed();
