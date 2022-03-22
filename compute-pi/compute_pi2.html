@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Compute Pi - version 2</title>
+  <meta charset="utf-8">
+  <style>
+    p span {
+        overflow-wrap: anywhere;
+    }   
+  </style>
+  <script type="text/javascript" src="decimal.js"></script>
+  <script type="text/javascript" src="value-of-pi.js"></script>
+</head>
+<body>
+    <h1>Compute Pi (version 2)</h1>
+    <p>Uses <a href="https://en.wikipedia.org/wiki/Borwein%27s_algorithm">Borwein's quadratic convergence algorithm</a> and the <a href="https://github.com/MikeMcl/decimal.js">decimal.js</a> arbitrary-precision numerical package to iteratively compute the value of Pi. Compares the result to a hardcoded reference value of Pi good to 100,000 digits.</p>
+    <form id="computeForm">
+        <table>
+        <tr>
+            <td><label for="precision">Precision:</label></td>
+            <td><input id="precision" type="number" value="20" min="20" max="100000"></input></td>
+        </tr>
+        <tr>
+            <td><label for="iterations">Iterations:</label></td>
+            <td><input id="iterations" type="number" value="0" min="0"></input></td>
+        </tr>
+        <tr>
+            <td><input type="submit" id="computeButton" value="Compute"></td><td></td>
+        </tr>
+        </table>
+    </form>
+    <p>Pi<sub></sub> = <span id="pi-number"></span><br><span id="miss-index"></span></p>
+    <p>A<sub></sub> = <span id="x-number"></span></p>
+    <p>B<sub></sub> = <span id="y-number"></span></p>
+    <script type="text/javascript">
+
+        var D;
+        var x;
+        var pi;
+        var y;
+        var index;
+        var precision;
+        var iteration;
+
+        function checkEnter(e) {
+            var keyPressed = e.keyCode || e.which; 
+            if (keyPressed === 13) { 
+                e.preventDefault(); 
+                return false; 
+            } 
+        }
+
+        function display() {
+            var missIndex = -1;
+            var piStr = pi.toFixed();
+            var buff = '';
+            var miss = false;
+            for (i=0; i < piStr.length; i++) {
+                if (!miss) {
+                    if (i >= value_of_pi.length) {
+                        miss = true;
+                        buff += '<span style="color:red"><s>';
+                    }
+                    else if (piStr.charAt(i) !== value_of_pi.charAt(i)) {
+                        miss = true;
+                        missIndex = i;
+                        buff += '<span style="color:red"><s>';
+                    }
+                }
+                buff += piStr.charAt(i);
+            }
+            if (miss) {
+                buff += '</s></span>';
+            }
+            document.getElementById("x-number").innerHTML = x.toFixed();
+            document.getElementById("pi-number").innerHTML = buff;
+            document.getElementById("y-number").innerHTML = y.toFixed();
+            if (missIndex > 0) {
+                document.getElementById("miss-index").innerHTML = '(correct to ' + missIndex + ' places)';
+            }
+            else {
+                document.getElementById("miss-index").innerHTML = '';
+            } 
+            var subscripts = document.getElementsByTagName("sub");
+            for (i = 0; i < subscripts.length; i++) {
+                subscripts[i].innerHTML = index;
+            }           
+        }
+
+        function compute() {
+            var x0 = new D(x);
+            var sqrtx = x0.sqrt();
+            var invsqrtx = new D('1').dividedBy(sqrtx);
+            x = sqrtx.plus(invsqrtx).dividedBy('2');
+            var y0 = new D(y);
+            var xplusy = x0.plus(y0);
+            y = new D(1).plus(y0).times(sqrtx).dividedBy(xplusy);
+            var pi0 = new D(pi);
+            var oneplusy = new D(1).plus(y);
+            pi = new D(1).plus(x).times(pi0).times(y).dividedBy(oneplusy);
+            index += 1;
+            display();
+            if (index < iteration) {
+                setTimeout(compute, 500);
+            }
+            else {
+                document.getElementById("computeButton").disabled = false;
+            }
+        }
+
+        function run(evt) {
+            evt.preventDefault();
+            precision = parseInt(document.getElementById("precision").value);
+            if (isNaN(precision)) {
+                precision = 20;
+            }
+            iteration = parseInt(document.getElementById("iterations").value);
+            if (isNaN(iteration)) {
+                iteration = 0;
+            }
+            D = Decimal.clone({ precision: precision });
+            x = new D('2').sqrt();
+            pi = new D('2').plus(x);
+            y = new D('0');
+            index = 0;
+            if (iteration > 0) {
+                setTimeout(compute, 0);
+                document.getElementById("computeButton").disabled = true;
+            }
+            else {
+                display();
+            }
+        }
+
+        window.onload = function() {
+            var form = document.getElementById("computeForm");
+            form.onkeypress = checkEnter;
+            form.onsubmit = run;
+        };
+
+    </script>
+</body>
+</html>
