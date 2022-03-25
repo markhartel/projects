@@ -12,16 +12,16 @@
   <script type="text/javascript" src="value-of-pi.js"></script>
 </head>
 <body>
-    <h1>Compute Pi (version 2)</h1>
+    <h1>Compute Pi to an Arbitrary Number of Digits</h1>
     <p>Uses <a href="https://en.wikipedia.org/wiki/Borwein%27s_algorithm#Quadratic_convergence_(1984)">Borwein's quadratic convergence algorithm</a> and the <a href="https://github.com/MikeMcl/decimal.js">decimal.js</a> arbitrary-precision numerical package to iteratively compute the value of Pi. Compares the result to a hardcoded reference <a href="http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html">value of Pi</a> good to 100,000 digits.</p>
     <form id="computeForm">
         <table>
         <tr>
-            <td><label for="precision">Precision:</label></td>
+            <td><label for="precision">Number of Digits:</label></td>
             <td><input id="precision" type="number" value="20" min="20" max="100000"></input></td>
         </tr>
         <tr>
-            <td><label for="iterations">Iterations:</label></td>
+            <td><label for="iterations">Number of Iterations:</label></td>
             <td><input id="iterations" type="number" value="0" min="0"></input></td>
         </tr>
         <tr>
@@ -30,9 +30,9 @@
         </table>
     </form>
     <p>i = <span id="i-number"></span></p>
-    <p>Pi<sub></sub> = <span id="pi-number"></span><br><span id="miss-index"></span></p>
-    <p>A<sub></sub> = <span id="x-number"></span></p>
-    <p>B<sub></sub> = <span id="y-number"></span></p>
+    <p>&#x1D70B;<sub>i</sub> = <span id="pi-number"></span><br><span id="miss-index"></span></p>
+    <p>a<sub>i</sub> = <span id="x-number"></span></p>
+    <p>b<sub>i</sub> = <span id="y-number"></span></p>
     <script type="text/javascript">
 
         var D;
