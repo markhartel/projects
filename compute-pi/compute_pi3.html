@@ -60,7 +60,7 @@
                     }
                     else if (piStr.charAt(i) !== value_of_pi.charAt(i)) {
                         miss = true;
-                        missIndex = i;
+                        missIndex = i - 1;
                         buff += '<span style="color:red"><s>';
                     }
                 }
@@ -74,7 +74,7 @@
             document.getElementById("pi-number").innerHTML = buff;
             document.getElementById("y-number").innerHTML = y.toFixed();
             if (missIndex > 0) {
-                document.getElementById("miss-index").innerHTML = '(correct to ' + missIndex + ' places)';
+                document.getElementById("miss-index").innerHTML = '(correct to ' + missIndex + ' digits)';
             }
             else {
                 document.getElementById("miss-index").innerHTML = '';
