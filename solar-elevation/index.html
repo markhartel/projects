@@ -25,16 +25,6 @@
   <p>Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical axial tilts.</p>
   <form>
     <p>
-      <label for="planetType">Select planet:</label>
-      <select id="planetType">
-        <option value="standardearth" selected="selected">Standard Earth</option>
-        <option value="uprightearth">Upright Earth</option>
-        <option value="tiltedearth">Tilted Earth</option>
-        <option value="toppledearth">Toppled Earth</option>
-        <!--<option value="standardvenus">Standard Venus</option>-->
-      </select>
-    </p>
-    <p>
       <label for="observerLat">Select observer latitude:</label>
       <select id="observerLat">
         <option value="0" selected="selected">0 degrees</option>
@@ -47,6 +37,16 @@
         <option value="70">70 degrees</option>
         <option value="80">80 degrees</option>
         <option value="90">90 degrees</option>
+      </select>
+    </p>
+    <p>
+      <label for="planetType">Select axial tilt:</label>
+      <select id="planetType">
+        <option value="standardearth" selected="selected">Standard Earth</option>
+        <option value="uprightearth">Upright Earth</option>
+        <option value="tiltedearth">Tilted Earth</option>
+        <option value="toppledearth">Toppled Earth</option>
+        <!--<option value="standardvenus">Standard Venus</option>-->
       </select>
     </p>
    <p>
