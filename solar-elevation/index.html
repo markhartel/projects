@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>SolarElevation</title>
+  <meta charset="utf-8">
+  <style>
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: black;
+				shape-rendering: crispEdges;
+			}
+			
+			.axis text {
+				font-family: sans-serif;
+				font-size: 11px;
+			}
+  </style>
+  <script type="text/javascript" src="d3.js"></script>
+  <script type="text/javascript" src="solarelevation.js"></script>
+  </script>
+</head>
+<body>
+  <h1>Solar Elevation Plot (using D3)</h1>
+  <div id="plotDiv"></div>
+  <form>
+    <p>
+      <label for="planetType">Select planet:</label>
+      <select id="planetType">
+        <option value="standardearth" selected="selected">Standard Earth</option>
+        <option value="uprightearth">Upright Earth</option>
+        <option value="tiltedearth">Tilted Earth</option>
+        <option value="toppledearth">Toppled Earth</option>
+        <!--<option value="standardvenus">Standard Venus</option>-->
+      </select>
+    </p>
+    <p>
+      <label for="observerLat">Select observer latitude:</label>
+      <select id="observerLat">
+        <option value="0" selected="selected">0 degrees</option>
+        <option value="10">10 degrees</option>
+        <option value="20">20 degrees</option>
+        <option value="30">30 degrees</option>
+        <option value="40">40 degrees</option>
+        <option value="50">50 degrees</option>
+        <option value="60">60 degrees</option>
+        <option value="70">70 degrees</option>
+        <option value="80">80 degrees</option>
+        <option value="90">90 degrees</option>
+      </select>
+    </p>
+   <p>
+      <input type="button" id="plotButton" value="Plot">
+    </p>
+  </form>
+  <script type="text/javascript">
+  
+window.onload = function() {
+  var button = document.getElementById("plotButton");
+  button.onclick = plotHandler;
+};
+
+function plotHandler() {
+  
+  var observerLatitude = getSelection("observerLat");
+  observerLatitude = parseFloat(observerLatitude);
+  
+  var planetType = getSelection("planetType");
+	var hoursPerDay;
+	var hoursPerYear;
+	var planetTiltInDegrees;
+  if (planetType == "standardearth") {
+		hoursPerDay = 24.0;
+		hoursPerYear = hoursPerDay*365.25;
+		planetTiltInDegrees = 23.5;
+  }
+  else if (planetType == "uprightearth") {
+		hoursPerDay = 24.0;
+		hoursPerYear = hoursPerDay*365.25;
+		planetTiltInDegrees = 0.0;
+  }
+  else if (planetType == "tiltedearth") {
+		hoursPerDay = 24.0;
+		hoursPerYear = hoursPerDay*365.25;
+		planetTiltInDegrees = 45.0;
+  }
+  else if (planetType == "toppledearth") {
+		hoursPerDay = 24.0;
+		hoursPerYear = hoursPerDay*365.25;
+		planetTiltInDegrees = 90.0;
+  }
+  else if (planetType == "standardvenus") {
+		hoursPerDay = 24.0*243.0;
+		hoursPerYear = 24.0*225.0;
+		planetTiltInDegrees = 177.36;
+  }
+	var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
+  
+  document.getElementById("plotDiv").innerHTML = "";
+  
+  //Width and height
+	var w = 1000;
+	var h = 300;
+  var padding = 30;
+
+  //Create SVG element
+	var svg = d3.select("#plotDiv")
+		.append("svg")
+		.attr("width", w)
+		.attr("height", h);
+    
+  var startTime = 0.0;
+  var endTime = solar.yearLength;
+    
+  var dataset = [];
+  for (var time = startTime; time <= endTime; time += 1.0) {
+    var elevation = solar.calculate(time);
+    dataset.push(elevation);
+  }
+    
+  var xScale = d3.scale.linear()
+    .domain([startTime, endTime])
+    .range([padding, w - padding * 2]);
+  
+  var yScale = d3.scale.linear()
+    .domain([-90, 90])
+    .range([h - padding, padding]);
+    
+  svg.selectAll("circle")
+    .data(dataset)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d, i) {
+      return xScale(i);
+    })
+    .attr("cy", function(d) {
+      return yScale(d);
+    })
+    .attr("r", 2)
+    .style("fill", function(d) {
+      if (d < 0) {
+        return "blue";
+      }
+      else {
+        return "orange";
+      }
+    });
+    
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .orient("bottom")
+    .ticks(5)
+    .tickFormat(function(d) {
+      return "day " + Math.floor(d/hoursPerDay);
+    });
+    
+  svg.append("g")
+		.attr("class", "axis")
+		.attr("transform", "translate(0," + (h - padding) + ")")
+    .call(xAxis);
+    
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .orient("left")
+    .tickValues([-90, -60, -30, 0, 30, 60, 90]);
+    
+  svg.append("g")
+		.attr("class", "axis")
+		.attr("transform", "translate(" + padding + ",0)")
+    .call(yAxis);
+
+}
+
+function getSelection(id) {
+  var selectObj = document.getElementById(id);
+  var index = selectObj.selectedIndex;
+  return selectObj.options[index].value;
+}
+
+  </script>
+</body>
+</html>
