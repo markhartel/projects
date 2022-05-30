@@ -22,7 +22,8 @@
 </head>
 <body>
   <h1>Plot of Solar Elevation Over the Course of a Year</h1>
-  <p>Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical axial tilts.</p>
+  <p>Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical axial tilts. 
+  The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
   <form>
     <p>
       <label for="observerLat">Select observer latitude:</label>
@@ -42,10 +43,10 @@
     <p>
       <label for="planetType">Select axial tilt:</label>
       <select id="planetType">
-        <option value="standardearth" selected="selected">Standard Earth</option>
-        <option value="uprightearth">Upright Earth</option>
-        <option value="tiltedearth">Tilted Earth</option>
-        <option value="toppledearth">Toppled Earth</option>
+        <option value="standardearth" selected="selected">Standard Earth (23.5 degrees)</option>
+        <option value="uprightearth">Upright Earth (0 degrees)</option>
+        <option value="tiltedearth">Tilted Earth (45.0 degrees)</option>
+        <option value="toppledearth">Toppled Earth (90 degrees)</option>
         <!--<option value="standardvenus">Standard Venus</option>-->
       </select>
     </p>
