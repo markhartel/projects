@@ -21,8 +21,8 @@
   </script>
 </head>
 <body>
-  <h1>Solar Elevation Plot (using D3)</h1>
-  <div id="plotDiv"></div>
+  <h1>Plot of Solar Elevation Over the Course of a Year</h1>
+	<p>Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical axial tilts.</p>
   <form>
     <p>
       <label for="planetType">Select planet:</label>
@@ -53,6 +53,7 @@
       <input type="button" id="plotButton" value="Plot">
     </p>
   </form>
+  <div id="plotDiv"></div>
   <script type="text/javascript">
   
 window.onload = function() {
