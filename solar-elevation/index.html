@@ -21,9 +21,8 @@
   </script>
 </head>
 <body>
-  <h1>Plot of Solar Elevation Over the Course of a Year</h1>
-  <p>Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical axial tilts. 
-  The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
+  <h1>Solar Elevation Angle Study</h1>
+  <p>This is a study of how the solar elevation angle is affected by a planet's axial tilt and length of day and year. Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical planet types. The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
   <form>
     <p>
       <label for="observerLat">Select observer latitude:</label>
@@ -41,143 +40,164 @@
       </select>
     </p>
     <p>
-      <label for="planetType">Select axial tilt:</label>
+      <label for="planetType">Select planet:</label>
       <select id="planetType">
-        <option value="standardearth" selected="selected">Standard Earth (23.5 degrees)</option>
-        <option value="uprightearth">Upright Earth (0 degrees)</option>
-        <option value="tiltedearth">Tilted Earth (45 degrees)</option>
-        <option value="toppledearth">Toppled Earth (90 degrees)</option>
-        <!--<option value="standardvenus">Standard Venus</option>-->
+        <option value="standardearth" selected="selected">Actual Earth</option>
+        <option value="uprightearth">Upright Earth</option>
+        <option value="tiltedearth">Tilted Earth</option>
+        <option value="toppledearth">Toppled Earth</option>
+        <option value="longdayearth">Long-day Earth</option>
+        <option value="lockedearth">Tidal-locked Earth</option>
       </select>
+      <label>axial tilt = <span id="tiltSpan"></span> degrees, hours per day = <span id="hoursPerDaySpan"></span>, hours per year = <span id="hoursPerYearSpan"></span>, days per year = <span id="daysPerYearSpan"></span></label>
     </p>
-   <p>
+    <p>
       <input type="button" id="plotButton" value="Plot">
     </p>
   </form>
   <div id="plotDiv"></div>
   <script type="text/javascript">
   
-window.onload = function() {
-  var button = document.getElementById("plotButton");
-  button.onclick = plotHandler;
-};
+    var hoursPerDay = 24.0;
+	  var hoursPerYear = hoursPerDay*365.25;
+	  var planetTiltInDegrees = 23.5;
+    updateSpanLabels();
 
-function plotHandler() {
-  
-  var observerLatitude = getSelection("observerLat");
-  observerLatitude = parseFloat(observerLatitude);
-  
-  var planetType = getSelection("planetType");
-	var hoursPerDay;
-	var hoursPerYear;
-	var planetTiltInDegrees;
-  if (planetType == "standardearth") {
-		hoursPerDay = 24.0;
-		hoursPerYear = hoursPerDay*365.25;
-		planetTiltInDegrees = 23.5;
-  }
-  else if (planetType == "uprightearth") {
-		hoursPerDay = 24.0;
-		hoursPerYear = hoursPerDay*365.25;
-		planetTiltInDegrees = 0.0;
-  }
-  else if (planetType == "tiltedearth") {
-		hoursPerDay = 24.0;
-		hoursPerYear = hoursPerDay*365.25;
-		planetTiltInDegrees = 45.0;
-  }
-  else if (planetType == "toppledearth") {
-		hoursPerDay = 24.0;
-		hoursPerYear = hoursPerDay*365.25;
-		planetTiltInDegrees = 90.0;
-  }
-  else if (planetType == "standardvenus") {
-		hoursPerDay = 24.0*243.0;
-		hoursPerYear = 24.0*225.0;
-		planetTiltInDegrees = 177.36;
-  }
-	var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
-  
-  document.getElementById("plotDiv").innerHTML = "";
-  
-  //Width and height
-	var w = 1000;
-	var h = 300;
-  var padding = 30;
+    window.onload = function() {
+      var button = document.getElementById("plotButton");
+      button.onclick = plotHandler;
 
-  //Create SVG element
-	var svg = d3.select("#plotDiv")
-		.append("svg")
-		.attr("width", w)
-		.attr("height", h);
-    
-  var startTime = 0.0;
-  var endTime = solar.yearLength;
-    
-  var dataset = [];
-  for (var time = startTime; time <= endTime; time += 1.0) {
-    var elevation = solar.calculate(time);
-    dataset.push(elevation);
-  }
-    
-  var xScale = d3.scale.linear()
-    .domain([startTime, endTime])
-    .range([padding, w - padding * 2]);
-  
-  var yScale = d3.scale.linear()
-    .domain([-90, 90])
-    .range([h - padding, padding]);
-    
-  svg.selectAll("circle")
-    .data(dataset)
-    .enter()
-    .append("circle")
-    .attr("cx", function(d, i) {
-      return xScale(i);
-    })
-    .attr("cy", function(d) {
-      return yScale(d);
-    })
-    .attr("r", 2)
-    .style("fill", function(d) {
-      if (d < 0) {
-        return "blue";
+      var select = document.getElementById("observerLat");
+      select.onchange = latitudeChanged;
+
+      var select = document.getElementById("planetType");
+      select.onchange = planetChanged;
+    };
+
+    function latitudeChanged() {
+      document.getElementById("plotDiv").innerHTML = "";
+    }
+
+    function planetChanged() {
+      document.getElementById("plotDiv").innerHTML = "";
+      var planetType = getSelection("planetType");
+      if (planetType == "standardearth") {
+        hoursPerDay = 24.0;
+        hoursPerYear = hoursPerDay*365.25;
+        planetTiltInDegrees = 23.5;
       }
-      else {
-        return "orange";
+      else if (planetType == "uprightearth") {
+        hoursPerDay = 24.0;
+        hoursPerYear = hoursPerDay*365.25;
+        planetTiltInDegrees = 0.0;
       }
-    });
-    
-  var xAxis = d3.svg.axis()
-    .scale(xScale)
-    .orient("bottom")
-    .ticks(5)
-    .tickFormat(function(d) {
-      return "day " + Math.floor(d/hoursPerDay);
-    });
-    
-  svg.append("g")
-		.attr("class", "axis")
-		.attr("transform", "translate(0," + (h - padding) + ")")
-    .call(xAxis);
-    
-  var yAxis = d3.svg.axis()
-    .scale(yScale)
-    .orient("left")
-    .tickValues([-90, -60, -30, 0, 30, 60, 90]);
-    
-  svg.append("g")
-		.attr("class", "axis")
-		.attr("transform", "translate(" + padding + ",0)")
-    .call(yAxis);
+      else if (planetType == "tiltedearth") {
+        hoursPerDay = 24.0;
+        hoursPerYear = hoursPerDay*365.25;
+        planetTiltInDegrees = 45.0;
+      }
+      else if (planetType == "toppledearth") {
+        hoursPerDay = 24.0;
+        hoursPerYear = hoursPerDay*365.25;
+        planetTiltInDegrees = 90.0;
+      }
+      else if (planetType == "longdayearth") {
+        hoursPerDay = 24.0*365.25/10;
+        hoursPerYear = 24.0*365.25;
+        planetTiltInDegrees = 23.5;
+      }
+      else if (planetType == "lockedearth") {
+        hoursPerDay = 24.0*365.25;
+        hoursPerYear = 24.0*365.25;
+        planetTiltInDegrees = 23.5;
+      }
+      updateSpanLabels();
+    }
 
-}
+    function plotHandler() {
+      var observerLatitude = getSelection("observerLat");
+      observerLatitude = parseFloat(observerLatitude);
+      var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
+      var startTime = 0.0;
+      var endTime = solar.yearLength;
+      var dataset = [];
+      for (var time = startTime; time <= endTime; time += 1.0) {
+        var elevation = solar.calculate(time);
+        dataset.push(elevation);
+      }
+      plotElevation(dataset, startTime, endTime, 24.0);
+    }
 
-function getSelection(id) {
-  var selectObj = document.getElementById(id);
-  var index = selectObj.selectedIndex;
-  return selectObj.options[index].value;
-}
+    function updateSpanLabels() {
+      document.getElementById("tiltSpan").innerHTML = planetTiltInDegrees;
+      document.getElementById("hoursPerDaySpan").innerHTML = hoursPerDay;
+      document.getElementById("hoursPerYearSpan").innerHTML = hoursPerYear;
+      document.getElementById("daysPerYearSpan").innerHTML = hoursPerYear/hoursPerDay;
+    }
+
+    function plotElevation(dataset, startTime, endTime, hoursPerDay) {
+      document.getElementById("plotDiv").innerHTML = "";
+      var w = 1000;
+      var h = 300;
+      var padding = 30;
+      var svg = d3.select("#plotDiv")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h+10);
+      var xScale = d3.scale.linear()
+        .domain([startTime, endTime])
+        .range([padding, w - padding * 2]);      
+      var yScale = d3.scale.linear()
+        .domain([-90, 90])
+        .range([h - padding, padding]);        
+      svg.selectAll("circle")
+        .data(dataset)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d, i) {
+          return xScale(i);
+        })
+        .attr("cy", function(d) {
+          return yScale(d);
+        })
+        .attr("r", 2)
+        .style("fill", function(d) {
+          if (d < 0) {
+            return "blue";
+          }
+          else {
+            return "orange";
+          }
+        });        
+      var xAxis = d3.svg.axis()
+        .scale(xScale)
+        .orient("bottom")
+        .ticks(5)
+        .tickFormat(function(d) {
+          return "hour " + Math.floor(d);
+        });        
+      svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0," + (h - padding) + ")")
+        .call(xAxis)
+        .append("text").text("solar elevation angle vs elapsed time")
+        .attr("x", w/2-100).attr("y", 35)
+        .attr("fill", "black");        
+      var yAxis = d3.svg.axis()
+        .scale(yScale)
+        .orient("left")
+        .tickValues([-90, -60, -30, 0, 30, 60, 90]);        
+      svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(" + padding + ",0)")
+        .call(yAxis);
+    }
+
+    function getSelection(id) {
+      var selectObj = document.getElementById(id);
+      var index = selectObj.selectedIndex;
+      return selectObj.options[index].value;
+    }
 
   </script>
 </body>
