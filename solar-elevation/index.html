@@ -21,8 +21,8 @@
   </script>
 </head>
 <body>
-  <h1>Solar Elevation Angle Study</h1>
-  <p>This is a study of how the solar elevation angle is affected by a planet's axial tilt and length of day and year. Uses <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical planet types. The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
+  <h1>Solar Elevation Angle Demo</h1>
+  <p>This is a demonstration of how the solar elevation angle is affected by a planet's axial tilt and length of day and year. Uses the plotting package <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical planet types. The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
   <form>
     <p>
       <label for="observerLat">Select observer latitude:</label>
@@ -52,12 +52,20 @@
       <label>axial tilt = <span id="tiltSpan"></span> degrees, hours per day = <span id="hoursPerDaySpan"></span>, hours per year = <span id="hoursPerYearSpan"></span>, days per year = <span id="daysPerYearSpan"></span></label>
     </p>
     <p>
-      <input type="button" id="plotButton" value="Plot">
+      <button type="button" id="plotButton">Plot</button>
     </p>
   </form>
+  <p>Elapsed hours: <span id="elapsedHoursSpan">0</span></p>
+  <p>Elapsed days: <span id="elapsedDaysSpan">0</span></p>
   <div id="plotDiv"></div>
   <script type="text/javascript">
   
+    var svg;
+    var xScale;
+    var yScale;
+    var solar;
+    var time;
+    var endTime;
     var hoursPerDay = 24.0;
 	  var hoursPerYear = hoursPerDay*365.25;
 	  var planetTiltInDegrees = 23.5;
@@ -76,6 +84,8 @@
 
     function latitudeChanged() {
       document.getElementById("plotDiv").innerHTML = "";
+      time = 0
+      updateElapsedLabels();
     }
 
     function planetChanged() {
@@ -111,21 +121,36 @@
         hoursPerYear = 24.0*365.25;
         planetTiltInDegrees = 23.5;
       }
+      time = 0
+      updateElapsedLabels();
       updateSpanLabels();
     }
 
     function plotHandler() {
+      var animate = true;
       var observerLatitude = getSelection("observerLat");
       observerLatitude = parseFloat(observerLatitude);
-      var solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
-      var startTime = 0.0;
-      var endTime = solar.yearLength;
-      var dataset = [];
-      for (var time = startTime; time <= endTime; time += 1.0) {
-        var elevation = solar.calculate(time);
-        dataset.push(elevation);
+      solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
+      endTime = solar.yearLength;
+      if (animate) {
+        createPlot(0.0, endTime);
+        time = 0.0;
+        setTimeout(compute, 0);
+        document.getElementById("observerLat").disabled = true;
+        document.getElementById("planetType").disabled = true;
+        document.getElementById("plotButton").disabled = true;
+        document.getElementById("plotButton").innerHTML = 'Working...';
       }
-      plotElevation(dataset, startTime, endTime, 24.0);
+      else {
+        var dataset = [];
+        for (time = 0.0; time <= endTime; time += 1.0) {
+          var elevation = solar.calculate(time);
+          dataset.push(elevation);
+          updateElapsedLabels();
+        }
+        createPlot(0.0, endTime);
+        plotElevations(dataset);      
+      }
     }
 
     function updateSpanLabels() {
@@ -135,40 +160,26 @@
       document.getElementById("daysPerYearSpan").innerHTML = hoursPerYear/hoursPerDay;
     }
 
-    function plotElevation(dataset, startTime, endTime, hoursPerDay) {
+    function updateElapsedLabels() {
+      document.getElementById("elapsedHoursSpan").innerHTML = time;
+      document.getElementById("elapsedDaysSpan").innerHTML = Math.round(time/hoursPerDay);
+    }
+
+    function createPlot(startTime, endTime) {
       document.getElementById("plotDiv").innerHTML = "";
       var w = 1000;
       var h = 300;
       var padding = 30;
-      var svg = d3.select("#plotDiv")
+      svg = d3.select("#plotDiv")
         .append("svg")
         .attr("width", w)
         .attr("height", h+10);
-      var xScale = d3.scale.linear()
+      xScale = d3.scale.linear()
         .domain([startTime, endTime])
         .range([padding, w - padding * 2]);      
-      var yScale = d3.scale.linear()
+      yScale = d3.scale.linear()
         .domain([-90, 90])
-        .range([h - padding, padding]);        
-      svg.selectAll("circle")
-        .data(dataset)
-        .enter()
-        .append("circle")
-        .attr("cx", function(d, i) {
-          return xScale(i);
-        })
-        .attr("cy", function(d) {
-          return yScale(d);
-        })
-        .attr("r", 2)
-        .style("fill", function(d) {
-          if (d < 0) {
-            return "blue";
-          }
-          else {
-            return "orange";
-          }
-        });        
+        .range([h - padding, padding]);
       var xAxis = d3.svg.axis()
         .scale(xScale)
         .orient("bottom")
@@ -191,6 +202,58 @@
         .attr("class", "axis")
         .attr("transform", "translate(" + padding + ",0)")
         .call(yAxis);
+    }
+
+    function plotElevation(time, elevation) {
+      var cx = xScale(time);
+      var cy = yScale(elevation);
+      var color = "orange";
+      if (elevation < 0) {
+        color = "blue";
+      }
+      svg.append("circle")
+        .attr("cx", cx)
+        .attr("cy", cy)
+        .attr("r", 2)
+        .style("fill", color);   
+    }
+
+    function plotElevations(dataset) {
+      svg.selectAll("circle")
+        .data(dataset)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d, i) {
+          return xScale(i);
+        })
+        .attr("cy", function(d) {
+          return yScale(d);
+        })
+        .attr("r", 2)
+        .style("fill", function(d) {
+          if (d < 0) {
+            return "blue";
+          }
+          else {
+            return "orange";
+          }
+        });              
+    }
+
+    function compute() {
+      updateElapsedLabels();
+      var elevation = solar.calculate(time);
+      plotElevation(time, elevation);
+      time += 1.0;
+      if (time <= endTime) {
+        setTimeout(compute, 1);
+      }
+      else {
+        document.getElementById("observerLat").disabled = false;
+        document.getElementById("planetType").disabled = false;
+        document.getElementById("plotButton").disabled = false;
+        document.getElementById("plotButton").innerHTML = 'Plot';
+      }
     }
 
     function getSelection(id) {
