@@ -22,7 +22,7 @@
 </head>
 <body>
   <h1>Solar Elevation Angle Demo</h1>
-  <p>This is a demonstration of how the solar elevation angle is affected by a planet's axial tilt and length of day and year. Uses the plotting package <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical planet types. The algorithm for calculating solar elevation was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
+  <p>This is a demonstration of how the solar elevation angle is affected by a planet's axial tilt and length of day and year. Uses the plotting package <a href="https://d3js.org/">D3</a> to plot the elevation angle of the sun over the course of a year for selected observer latitudes and hypothetical planet types. The algorithm for <a href="world-is-round-appendix.pdf">calculating solar elevation</a> was taken from the book <a href="https://www.goodreads.com/book/show/890377.The_World_Is_Round">The World is Round</a> by Tony Rothman.</p>
   <form>
     <p>
       <label for="observerLat">Select observer latitude:</label>
@@ -48,6 +48,7 @@
         <option value="toppledearth">Toppled Earth</option>
         <option value="longdayearth">Long-day Earth</option>
         <option value="lockedearth">Tidal-locked Earth</option>
+        <option value="patrabannk">Patra-Bannk</option>
       </select>
       <label>axial tilt = <span id="tiltSpan"></span> degrees, hours per day = <span id="hoursPerDaySpan"></span>, hours per year = <span id="hoursPerYearSpan"></span>, days per year = <span id="daysPerYearSpan"></span></label>
     </p>
@@ -65,9 +66,10 @@
     var yScale;
     var solar;
     var time;
-    var endTime;
+    var tInc = 1.0;
     var hoursPerDay = 24.0;
-	  var hoursPerYear = hoursPerDay*365.25;
+	  var hoursPerYear = 24.0*365.25;
+    var endTime = hoursPerYear;
 	  var planetTiltInDegrees = 23.5;
     updateSpanLabels();
 
@@ -93,33 +95,52 @@
       var planetType = getSelection("planetType");
       if (planetType == "standardearth") {
         hoursPerDay = 24.0;
-        hoursPerYear = hoursPerDay*365.25;
+        hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 23.5;
       }
       else if (planetType == "uprightearth") {
         hoursPerDay = 24.0;
-        hoursPerYear = hoursPerDay*365.25;
+        hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 0.0;
       }
       else if (planetType == "tiltedearth") {
         hoursPerDay = 24.0;
-        hoursPerYear = hoursPerDay*365.25;
+        hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 45.0;
       }
       else if (planetType == "toppledearth") {
         hoursPerDay = 24.0;
-        hoursPerYear = hoursPerDay*365.25;
+        hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 90.0;
       }
       else if (planetType == "longdayearth") {
         hoursPerDay = 24.0*365.25/10;
         hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 23.5;
       }
       else if (planetType == "lockedearth") {
         hoursPerDay = 24.0*365.25;
         hoursPerYear = 24.0*365.25;
+        endTime = hoursPerYear;
+        tInc = 1.0;
         planetTiltInDegrees = 23.5;
+      }
+      else if (planetType == "patrabannk") {
+        hoursPerDay = 18000.0;
+        hoursPerYear = -24000.0;
+        endTime = 24000.0*3;
+        tInc = 10.0;
+        planetTiltInDegrees = 20.0;
       }
       time = 0
       updateElapsedLabels();
@@ -131,7 +152,6 @@
       var observerLatitude = getSelection("observerLat");
       observerLatitude = parseFloat(observerLatitude);
       solar = new SolarElevation(hoursPerDay, hoursPerYear, planetTiltInDegrees, observerLatitude);
-      endTime = solar.yearLength;
       if (animate) {
         createPlot(0.0, endTime);
         time = 0.0;
@@ -143,7 +163,7 @@
       }
       else {
         var dataset = [];
-        for (time = 0.0; time <= endTime; time += 1.0) {
+        for (time = 0.0; time <= endTime; time += tInc) {
           var elevation = solar.calculate(time);
           dataset.push(elevation);
           updateElapsedLabels();
@@ -156,8 +176,13 @@
     function updateSpanLabels() {
       document.getElementById("tiltSpan").innerHTML = planetTiltInDegrees;
       document.getElementById("hoursPerDaySpan").innerHTML = hoursPerDay;
-      document.getElementById("hoursPerYearSpan").innerHTML = hoursPerYear;
-      document.getElementById("daysPerYearSpan").innerHTML = hoursPerYear/hoursPerDay;
+      if (hoursPerYear < 0) {
+        document.getElementById("hoursPerYearSpan").innerHTML = Math.abs(hoursPerYear) + ' (retrograde)';
+      }
+      else {
+        document.getElementById("hoursPerYearSpan").innerHTML = hoursPerYear;
+      }
+      document.getElementById("daysPerYearSpan").innerHTML = Math.abs(hoursPerYear/hoursPerDay);
     }
 
     function updateElapsedLabels() {
@@ -244,7 +269,7 @@
       updateElapsedLabels();
       var elevation = solar.calculate(time);
       plotElevation(time, elevation);
-      time += 1.0;
+      time += tInc;
       if (time <= endTime) {
         setTimeout(compute, 1);
       }
