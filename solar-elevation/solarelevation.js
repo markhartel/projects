@@ -31,6 +31,18 @@ function SolarElevation(dayLength, yearLength, planetTilt, observerLatitude) {
 		var elevation = 90.0 - radiansToDegrees(zeta);
 		return elevation;
 	};
+	this.calculate2 = function(time) {
+		var alphaAngle = this.alpha * time;
+		var betaAngle = this.beta * time;
+		var sinAlpha = Math.sin(alphaAngle);
+		var cosAlpha = Math.cos(alphaAngle);
+		var sinBeta = Math.sin(betaAngle);
+		var cosBeta = Math.cos(betaAngle);
+		var coszeta = this.costheta*cosAlpha*this.cosphi*cosBeta + this.costheta*sinAlpha*sinBeta + this.sintheta*this.sinphi*cosBeta;
+		var zeta = Math.acos(coszeta);
+		var elevation = 90.0 - radiansToDegrees(zeta);
+		return elevation;
+	};
 	this.calculateAz = function(time) {
 		var alphaAngle = this.alpha * time;
 		var betaAngle = this.beta * time;
@@ -40,7 +52,7 @@ function SolarElevation(dayLength, yearLength, planetTilt, observerLatitude) {
 //		return azimuth;
 	};
 	this.position = function(time) {
-		return [this.calculateAz(time), this.calculate(time)];
+		return [this.calculateAz(time), -this.calculate(time)];
 	};
 }
 
