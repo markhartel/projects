@@ -58,6 +58,7 @@
   </form>
   <p>Elapsed hours: <span id="elapsedHoursSpan">0</span></p>
   <p>Elapsed days: <span id="elapsedDaysSpan">0</span></p>
+  <p>Elapsed years: <span id="elapsedYearsSpan">0</span></p>
   <div id="plotDiv"></div>
   <script type="text/javascript">
   
@@ -188,6 +189,7 @@
     function updateElapsedLabels() {
       document.getElementById("elapsedHoursSpan").innerHTML = time;
       document.getElementById("elapsedDaysSpan").innerHTML = Math.round(time/hoursPerDay);
+      document.getElementById("elapsedYearsSpan").innerHTML = Math.round(time/Math.abs(hoursPerYear));
     }
 
     function createPlot(startTime, endTime) {
