@@ -188,8 +188,8 @@
 
     function updateElapsedLabels() {
       document.getElementById("elapsedHoursSpan").innerHTML = time;
-      document.getElementById("elapsedDaysSpan").innerHTML = Math.round(time/hoursPerDay);
-      document.getElementById("elapsedYearsSpan").innerHTML = Math.round(time/Math.abs(hoursPerYear));
+      document.getElementById("elapsedDaysSpan").innerHTML = Math.floor(time/hoursPerDay);
+      document.getElementById("elapsedYearsSpan").innerHTML = Math.floor(time/Math.abs(hoursPerYear));
     }
 
     function createPlot(startTime, endTime) {
